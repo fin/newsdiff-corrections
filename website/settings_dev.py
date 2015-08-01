@@ -2,6 +2,12 @@
 
 import os.path
 
+CORRECTION_SIGNIFIERS = [
+    r'^update',
+    r'^korrektur',
+    r'^correction'
+]
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
