@@ -1,7 +1,19 @@
-NewsDiffs
-==========
+NewsDiffs - Correction-detecting fork
+=====================================
 
-A website and framework that tracks changes in online news articles over time.
+Originally a website and framework that tracks changes in online news articles over time.
+
+Enhanced for a master's thesis related prototype by:
+
+* scrapers for Austrian news sites
+* a find_errata command which diffs updates and finds explicit
+  corrections
+
+Enhancements by Markus (fin) Hametner.
+
+
+The Original
+============
 
 Original installation at newsdiffs.org.
 A product of the Knight Mozilla MIT news hackathon in June 2012.
