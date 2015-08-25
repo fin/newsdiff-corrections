@@ -29,7 +29,7 @@ ancient = datetime(1901, 1, 1)
 # Create your models here.
 class Article(models.Model):
     class Meta:
-        db_table = 'articles'
+        db_table = 'Articles'
 
     url = models.CharField(max_length=255, blank=False, unique=True,
                            db_index=True)
