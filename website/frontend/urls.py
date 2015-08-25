@@ -12,6 +12,7 @@ urlpatterns = [
   url(r'^browse/$', 'frontend.views.browse', name='browse'),
   url(r'^browse/(.*)$', 'frontend.views.browse', name='browse'),
   url(r'^feed/browse/(.*)$', 'frontend.views.feed', name='feed'),
+  url(r'^contact/$', 'frontend.views.contact', name='contact'),
   url(r'^examples/$', 'frontend.views.examples', name='examples'),
   url(r'^subscribe/$', 'frontend.views.subscribe', name='subscribe'),
   url(r'^press/$', 'frontend.views.press', name='press'),
