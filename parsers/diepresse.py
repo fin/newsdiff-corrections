@@ -48,4 +48,4 @@ class DiePresseParser(BaseParser):
 
         self.body = (h.handle(lead.prettify().decode('utf-8')).strip()+'\n\n' if lead else '') + h.handle(content.prettify().decode('utf-8')).strip()
 
-        self.body = u'\n'.join(x for x in self.body.split('\n') if not x.startswith('Karte zur'))
+        self.body = u'\n\n'.join(x for x in self.body.split('\n\n') if not x.startswith('Karte zur'))
