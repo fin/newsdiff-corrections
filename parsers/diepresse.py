@@ -47,3 +47,5 @@ class DiePresseParser(BaseParser):
         self.date = '' if not date else date.getText()
 
         self.body = (h.handle(lead.prettify().decode('utf-8')).strip()+'\n\n' if lead else '') + h.handle(content.prettify().decode('utf-8')).strip()
+
+        self.body = u'\n'.join(x for x in self.body.split('\n') if not x.startswith('Karte zur'))
