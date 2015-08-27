@@ -85,3 +85,7 @@ class Command(BaseCommand):
             json.dump(towrite, f)
             f.close()
 
+        f2 = open(os.path.join(settings.WEBAPP_ROOT, '..', 'errata', 'sites.json'), 'w')
+        json.dump(list(itertools.chain(*[x.domains for x in settings.PARSERS])), f2)
+        f2.close()
+

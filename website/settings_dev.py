@@ -8,6 +8,8 @@ CORRECTION_SIGNIFIERS = [
     r'^correction'
 ]
 
+from parsers import parsers as PARSERS
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
