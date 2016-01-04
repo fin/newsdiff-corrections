@@ -10,6 +10,7 @@
 parsers = """
 dst.DerStandardParser
 diepresse.DiePresseParser
+orf.OrfParser
 """.split()
 
 parser_dict = {}
@@ -28,4 +29,4 @@ def get_parser(url):
 
 parsers = list(set(parser for parser in parser_dict.values()))
 
-__all__ = ['parsers', 'get_parser']
+__all__ = ['parsers', 'get_parser', 'parser_dict']

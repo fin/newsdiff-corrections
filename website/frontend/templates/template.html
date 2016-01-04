@@ -4,10 +4,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>NewsDiffs | {% block title %}Tracking Online News Articles Over Time{% endblock %}</title>
+    <title>NewsDiff (corrections) | {% block title %}Tracking Online News Articles Over Time{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="NewsDiffs tracks changes in online news articles over time">
-    <meta name="author" content="Eric Price, Greg Price, Jennifer 8. Lee">
+    <meta name="author" content="Fork by fin, original by Eric Price, Greg Price, Jennifer 8. Lee">
 
     <!-- Le styles -->
 
@@ -70,10 +69,7 @@
           <!--<div class="nav-collapse">-->
             <ul class="nav">
               <li {% block active_front %}{% endblock %}><a href="{% url 'root' %}">Home</a></li>
-              <li {% block active_about %}{% endblock %}><a href="{% url 'about' %}">About</a></li>
               <li {% block active_browse %}{% endblock %}><a href="{% url 'browse' %}">Browse</a></li>
-              <li {% block active_examples %}{% endblock %}><a href="{% url 'examples' %}">Highlights</a></li>
-              <li {% block active_press %}{% endblock %}><a href="{% url 'press' %}">Press</a></li>
               <li {% block active_contact %}{% endblock %}><a href="{% url 'contact' %}">Contact</a></li>
 
             </ul>
@@ -87,7 +83,7 @@
 <hr>
  {% block footer %} 
 	<footer>
-      <p>&copy; fin</p>
+      <p>&copy; fin, diffed content &copy; the respective original authors</p>
   </footer>
 {% endblock footer %}
     </div>

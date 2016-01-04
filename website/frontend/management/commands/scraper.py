@@ -281,6 +281,7 @@ def add_to_git_repo(data, filename, article):
             boring = True
         else:
             diff_info = get_diff_info(previous, data)
+            severity = calculate_serverity(previous, data)
 
     run_git_command(['add', filename], article.full_git_dir)
     if not already_exists:
@@ -301,7 +302,9 @@ def add_to_git_repo(data, filename, article):
     v = run_git_command(['rev-list', 'HEAD', '-n1'],
                         article.full_git_dir).strip()
     logger.debug('done %s', time.time()-start_time)
-    return v, boring, diff_info
+
+
+    return v, boring, diff_info, severity
 
 
 def load_article(url):
@@ -332,7 +335,7 @@ def update_article(article):
     to_store = unicode(parsed_article).encode('utf8')
     t = datetime.now()
     logger.debug('Article parsed; trying to store')
-    v, boring, diff_info = add_to_git_repo(to_store,
+    v, boring, diff_info, severity = add_to_git_repo(to_store,
                                            url_to_filename(article.url),
                                            article)
     if v:
@@ -343,6 +346,7 @@ def update_article(article):
                                byline=parsed_article.byline,
                                date=t,
                                article=article,
+                               severity=severity,
                                )
         v_row.diff_info = diff_info
         v_row.save()
@@ -439,6 +443,10 @@ def cleanup_git_repo(git_dir):
         age = time.time() - stat.st_ctime
         if age > 60*5:
             os.remove(fname)
+
+
+def calculate_severity(previous, data):
+    return 20
 
 if __name__ == '__main__':
     print >> sys.stderr, "Try `python website/manage.py scraper`."

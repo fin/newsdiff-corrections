@@ -12,6 +12,7 @@ import django.db
 import time
 from django.template import Context, RequestContext, loader
 from django.views.decorators.cache import cache_page
+from website.frontend.models import PublicationDict
 
 OUT_FORMAT = '%B %d, %Y at %l:%M%P EDT'
 
@@ -54,7 +55,8 @@ def get_last_update(source):
 
 def get_articles(source=None, distance=0):
     articles = []
-    rx = re.compile(r'^https?://(?:[^/]*\.)%s/' % source if source else '')
+    RXSOURCE = r'^https?://(?:[^/]*\.)?%s/' % source if source else ''
+    rx = re.compile(RXSOURCE)
 
     pagelength = datetime.timedelta(days=1)
     end_date = datetime.datetime.now() - distance * pagelength
@@ -89,8 +91,8 @@ def get_articles(source=None, distance=0):
 
     for article, versions in article_dict.items():
         url = article.url
-        if not rx.match(url):
-            print 'REJECTING', url
+        if not rx.search(url):
+            print 'REJECTING', url, RXSOURCE
             continue
         if 'blogs.nytimes.com' in url: #XXX temporary
             continue
@@ -104,8 +106,7 @@ def get_articles(source=None, distance=0):
     return articles
 
 
-SOURCES = '''nytimes.com cnn.com politico.com washingtonpost.com
-bbc.co.uk'''.split()
+SOURCES = PublicationDict.keys() 
 
 def is_valid_domain(domain):
     """Cheap method to tell whether a domain is being tracked."""
