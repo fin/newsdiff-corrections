@@ -13,6 +13,7 @@
 <table class="table table-condensed"  style="width:100%">
      <thead><tr>
 	<td>Headline</td>
+	<td>Severity</td>
 	<td>Date/Time EST Archived</td>
 	<td>Diff</td>
     </tr> </thead>
@@ -20,6 +21,7 @@
     {% for difflink, version in versions %}
     <tr>
       <td><a href="{{link}}">{{version.title}}</a></td>
+      <td>{{version.severity}}</td>
       <td>{{version.date}}</td>
       {% if difflink %}
       <td><a href="{{difflink}}">(Compare with previous)</a></td>

@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 
 import json
 from django.db import models, IntegrityError
+from django.conf import settings
+import diff_match_patch
 
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(THIS_DIR))
@@ -25,6 +27,7 @@ PublicationDict = dict([(k,v.__name__.replace('Parser', ''),) for k,v in parser_
 ancient = datetime(1901, 1, 1)
 
 SEVERITY = {
+  "BORING": 0,
   "MINIMAL": 10,
   "LOW": 25,
   "MODERATE": 50,
@@ -85,6 +88,7 @@ class Version(models.Model):
     diff_json = models.CharField(max_length=255, null=True)
     diff_details_json = models.TextField(null=True)
     severity = models.IntegerField(null=True)
+    severity_comment = models.TextField(null=True)
 
     def text(self):
         try:
@@ -116,23 +120,26 @@ class Version(models.Model):
             return json.loads(self.diff_details_json)
 
         pv = self.previous_version()
+
+
         if pv is None:
             diff_details = []
         else:
-            dmp = diff_match_patch.diff_match_patch()
-            dmp.Diff_Timeout = 3 # seconds; default of 1 is too little
-            diff = dmp.diff_main(old, new)
-            dmp.diff_cleanupSemantic(diff)
-            diff_details = diff
+            old = pv.text()
+            cur = self.text()
+            if old is None or cur is None:
+                diff_details = []
+            else:
+                dmp = diff_match_patch.diff_match_patch()
+                dmp.Diff_Timeout = 3 # seconds; default of 1 is too little
+                diff = dmp.diff_main(old.decode('utf-8'), cur.decode('utf-8'))
+                dmp.diff_cleanupSemantic(diff)
+                diff_details = diff
 
-        self.diff_details_json = json.dumps(diff_details)
+        self.diff_details_json = json.dumps(diff_details, ensure_ascii=False)
         self.save()
 
         return self.diff_details()
-
-
-    def severity_compared_to(self, older_version):
-        return self.__class__.calculate_severity(older_version.text(), self.text())
 
     @classmethod
     def diff_is_erratum(cls, diff):
@@ -151,12 +158,41 @@ class Version(models.Model):
                     return remaining_chars
         return False
 
-    def calculate_severity(self):
-        erratum = type(self).diff_is_erratum(self.diff_details())
-        if erratum and strip(erratum):
-            return SEVERITY["OFFICIAL"], erratum
+    def update_severity(self, save=True):
+        severity = 0
+        severity_comment = None
 
-        return 5
+        if self.diff_info:
+            chars_changed = self.diff_info['chars_added']+self.diff_info['chars_removed']
+            if chars_changed>0:
+                severity = SEVERITY["MINIMAL"]
+                severity_comment = 'At least slight changes were made'
+
+            if chars_changed>len(self.text())/5:
+                severity = SEVERITY["LOW"]
+                severity_comment = 'At least a fifth of the length of the article was changed'
+
+            if chars_changed>len(self.text())/2:
+                severity = SEVERITY["MODERATE"]
+                severity_comment = 'At least half of the article was changed'
+
+
+        # MISSING: whole-paragraph add/delete, etc
+
+
+
+        erratum = type(self).diff_is_erratum(self.diff_details())
+        if erratum and erratum.strip():
+            severity = SEVERITY["OFFICIAL"]
+            severity_comment = erratum
+
+        if severity != self.severity or severity_comment != self.severity_comment:
+            self.severity = severity
+            self.severity_comment = severity_comment
+            if save:
+                self.save()
+
+        return self.severity, self.severity_comment
 
 
 class Upvote(models.Model):

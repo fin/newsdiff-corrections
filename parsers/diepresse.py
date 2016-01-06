@@ -16,6 +16,11 @@ class DiePresseParser(BaseParser):
         self.meta = soup.findAll('meta')
 
         artikel = soup.find('article')
+
+        if not artikel:
+            self.real_article = False
+            return
+
         more = artikel.find('div', {'class': "article_more"})
         if more:
             more.extract()

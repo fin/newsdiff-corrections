@@ -15,7 +15,7 @@ class OrfParser(BaseParser):
 
         self.meta = soup.findAll('meta')
 
-        artikel = soup.find('div', {'class': 'storyWrapper '})
+        artikel = soup.find('div', {'class': re.compile(r'.*storyWrapper.*')})
 
         elt = artikel.find('h1')
         self.title = elt.getText()

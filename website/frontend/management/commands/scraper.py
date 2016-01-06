@@ -215,11 +215,16 @@ def is_boring(old, new):
             pass
     return False
 
-def get_diff_info(old, new):
+def get_diff(old, new):
     dmp = diff_match_patch.diff_match_patch()
     dmp.Diff_Timeout = 3 # seconds; default of 1 is too little
     diff = dmp.diff_main(old, new)
     dmp.diff_cleanupSemantic(diff)
+    return diff
+
+def get_diff_info(diff):
+    if diff is None:
+        return None
     chars_added   = sum(len(text) for (sign, text) in diff if sign == 1)
     chars_removed = sum(len(text) for (sign, text) in diff if sign == -1)
     return dict(chars_added=chars_added, chars_removed=chars_removed)
@@ -233,7 +238,7 @@ def add_to_git_repo(data, filename, article):
     mkdir_p(os.path.dirname(filename))
 
     boring = False
-    diff_info = None
+    diff = None
 
     try:
         previous = run_git_command(['show', 'HEAD:'+filename], article.full_git_dir)
@@ -280,8 +285,7 @@ def add_to_git_repo(data, filename, article):
         if is_boring(previous, data):
             boring = True
         else:
-            diff_info = get_diff_info(previous, data)
-            severity = calculate_serverity(previous, data)
+            diff = get_diff(previous, data)
 
     run_git_command(['add', filename], article.full_git_dir)
     if not already_exists:
@@ -304,7 +308,7 @@ def add_to_git_repo(data, filename, article):
     logger.debug('done %s', time.time()-start_time)
 
 
-    return v, boring, diff_info, severity
+    return v, boring, diff
 
 
 def load_article(url):
@@ -335,7 +339,7 @@ def update_article(article):
     to_store = unicode(parsed_article).encode('utf8')
     t = datetime.now()
     logger.debug('Article parsed; trying to store')
-    v, boring, diff_info, severity = add_to_git_repo(to_store,
+    v, boring, diff = add_to_git_repo(to_store,
                                            url_to_filename(article.url),
                                            article)
     if v:
@@ -346,13 +350,14 @@ def update_article(article):
                                byline=parsed_article.byline,
                                date=t,
                                article=article,
-                               severity=severity,
                                )
-        v_row.diff_info = diff_info
-        v_row.save()
+        v_row.diff_info = get_diff_info(diff)
+        v_row.diff_details_json = diff
+        v_row.update_severity(save=False)
         if not boring:
             article.last_update = t
-            article.save()
+        v_row.save()
+        article.save()
 
 def update_articles(todays_git_dir):
     logger.info('Starting scraper; looking for new URLs')
@@ -444,9 +449,6 @@ def cleanup_git_repo(git_dir):
         if age > 60*5:
             os.remove(fname)
 
-
-def calculate_severity(previous, data):
-    return 20
 
 if __name__ == '__main__':
     print >> sys.stderr, "Try `python website/manage.py scraper`."
