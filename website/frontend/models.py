@@ -83,6 +83,7 @@ class Version(models.Model):
     date = models.DateTimeField(blank=False)
     boring = models.BooleanField(blank=False, default=False)
     diff_json = models.CharField(max_length=255, null=True)
+    diff_details_json = models.TextField(null=True)
     severity = models.IntegerField(null=True)
 
     def text(self):
@@ -104,12 +105,37 @@ class Version(models.Model):
             self.diff_json = json.dumps(val)
     diff_info = property(get_diff_info, set_diff_info)
 
+    def previous_version(self):
+        vs = self.article.version_set.filter(date__lt=self.date).order_by('-date')
+        if vs:
+            return vs[0]
+        return None
+
+    def diff_details(self):
+        if self.diff_details_json is not None:
+            return json.loads(self.diff_details_json)
+
+        pv = self.previous_version()
+        if pv is None:
+            diff_details = []
+        else:
+            dmp = diff_match_patch.diff_match_patch()
+            dmp.Diff_Timeout = 3 # seconds; default of 1 is too little
+            diff = dmp.diff_main(old, new)
+            dmp.diff_cleanupSemantic(diff)
+            diff_details = diff
+
+        self.diff_details_json = json.dumps(diff_details)
+        self.save()
+
+        return self.diff_details()
+
+
     def severity_compared_to(self, older_version):
         return self.__class__.calculate_severity(older_version.text(), self.text())
 
-
     @classmethod
-    def diff_get_erratum(cls, diff):
+    def diff_is_erratum(cls, diff):
         chars_added   = '\n'.join([text for (sign, text) in diff if sign == 1])
         is_update = False
         for signifier in settings.CORRECTION_SIGNIFIERS:
@@ -124,15 +150,9 @@ class Version(models.Model):
                 else:
                     return remaining_chars
         return False
-        
-    @classmethod
-    def calculate_severity(cls, previous, current):
-        dmp = diff_match_patch.diff_match_patch()
-        dmp.Diff_Timeout = 3 # seconds; default of 1 is too little
-        diff = dmp.diff_main(old, new)
-        dmp.diff_cleanupSemantic(diff)
 
-        erratum = has_erratum(previous, current)
+    def calculate_severity(self):
+        erratum = type(self).diff_is_erratum(self.diff_details())
         if erratum and strip(erratum):
             return SEVERITY["OFFICIAL"], erratum
 
