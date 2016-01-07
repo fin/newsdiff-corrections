@@ -1,6 +1,7 @@
 from baseparser import BaseParser
 from BeautifulSoup import BeautifulSoup, Tag
 import html2text
+import re
 
 
 class OrfParser(BaseParser):
