@@ -34,14 +34,21 @@ class OrfParser(BaseParser):
 
         h = html2text.HTML2Text()
 
-        storyMeta = artikel.find('div', {'class': 'storyMeta socialshare'})
-        offscreen = storyMeta.find('span', {'class': 'offscreen'})
-        if offscreen:
-            offscreen.extract()
-        date = storyMeta.find('p', {"class":'date'})
-        self.date = '' if not date else date.getText()
-        storyMeta.extract()
+        storyMeta = artikel.find('div', {'class': re.compile(r'.*storyMeta.*')})
+        if storyMeta:
+            offscreen = storyMeta.find('span', {'class': 'offscreen'})
+            if offscreen:
+                offscreen.extract()
+            date = storyMeta.find('p', {"class":'date'})
+            self.date = '' if not date else date.getText()
+            storyMeta.extract()
+        else:
+            self.date = soup.find('meta', {'name':'dc.date'})['content']
 
+        if not content and not storyMeta:
+            self.real_article = False
+            return
 
         self.body = h.handle(content.prettify().decode('utf-8')).strip()
+        print self.body
 
