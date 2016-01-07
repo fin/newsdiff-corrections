@@ -50,5 +50,4 @@ class OrfParser(BaseParser):
             return
 
         self.body = h.handle(content.prettify().decode('utf-8')).strip()
-        print self.body
 
