@@ -93,4 +93,5 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'south',
     'frontend',
+    'thesis_stats',
 )

@@ -11,6 +11,7 @@ import sys
 import time
 import traceback
 import urllib2
+import json
 
 import diff_match_patch
 
@@ -352,8 +353,12 @@ def update_article(article):
                                article=article,
                                )
         v_row.diff_info = get_diff_info(diff)
-        v_row.diff_details_json = diff
-        v_row.update_severity(save=False)
+        v_row.diff_details_json = json.dumps(diff)
+        if diff:
+            try:
+                v_row.update_severity(save=False)
+            except:
+                print 'update_severity exception', diff
         if not boring:
             article.last_update = t
         v_row.save()
