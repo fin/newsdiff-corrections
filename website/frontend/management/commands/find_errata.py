@@ -48,40 +48,25 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         do_all = options['all']
 
-        versions = Version.objects.all()
+        versions = Version.objects.filter(severity__gt=0)
 
         if not do_all:
             versions = versions.filter(date__gte=datetime.date.today()-datetime.timedelta(days=1))
 
         versions = versions.order_by('date')
 
-        versions_by_article = itertools.groupby(versions,
-                key=lambda version: version.article_id)
-
-        errata = []
-        for article_id, versions_since_yesterday in versions_by_article:
-            versions_since_yesterday = list(versions_since_yesterday)
-            versioned_article = Article.objects.get(id=article_id)
-            versions_ever = versioned_article.versions()
-            versions_cur = versions_ever.filter(date__gte=versions_since_yesterday[0].date)
-            if versions_cur.count()<2:
-                continue
-            for pair in zip(versions_cur[0:len(versions_cur)-1], versions_cur[1:]):
-               err = has_erratum(pair[0].text(), pair[1].text())
-               if err:
-                   errata.append((versioned_article, pair, err,))
-
-        errata_by_date = itertools.groupby(errata,
-                key=lambda (a,p,e,): p[1].date.date()
+        errata_by_date = itertools.groupby(versions,
+                key=lambda x: x.date.date()
         )
         for date, errata_on_day in errata_by_date:
+            print date
             f = open(os.path.join(settings.WEBAPP_ROOT, '..', 'errata', date.isoformat()+'.json'), 'w')
-            towrite = [{'url': versioned_article.url,
-                       'time': pair[1].date.isoformat(),
-                       'update': err,
-                       'article_id': versioned_article.id,} for (versioned_article, pair, err,) in errata_on_day
+            towrite = [{'url': version.article.url,
+                       'time': version.date.isoformat(),
+                       'update': version.severity_comment,
+                       'severity': version.severity,
+                       'article_id': version.article.id,} for version in errata_on_day
                        ]
-            print towrite
             json.dump(towrite, f)
             f.close()
 

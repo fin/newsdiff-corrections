@@ -353,7 +353,7 @@ def update_article(article):
                                article=article,
                                )
         v_row.diff_info = get_diff_info(diff)
-        v_row.diff_details_json = json.dumps(diff)
+        v_row.diff_details_json = json.dumps(diff,ensure_ascii=False)
         if diff:
             try:
                 v_row.update_severity(save=False)
