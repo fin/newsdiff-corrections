@@ -65,6 +65,7 @@ class Command(BaseCommand):
                        'time': version.date.isoformat(),
                        'update': version.severity_comment,
                        'severity': version.severity,
+                       'title': version.title,
                        'article_id': version.article.id,} for version in errata_on_day
                        ]
             json.dump(towrite, f)
