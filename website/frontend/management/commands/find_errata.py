@@ -63,6 +63,7 @@ class Command(BaseCommand):
             f = open(os.path.join(settings.WEBAPP_ROOT, '..', 'errata', date.isoformat()+'.json'), 'w')
             towrite = [{'url': version.article.url,
                        'time': version.date.isoformat(),
+                       'id': version.pk,
                        'update': version.severity_comment,
                        'severity': version.severity,
                        'title': version.title,
