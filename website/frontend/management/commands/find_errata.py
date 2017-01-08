@@ -77,7 +77,7 @@ class Command(BaseCommand):
         f2.close()
 
         f3 = open(os.path.join(settings.WEBAPP_ROOT, '..', 'errata', 'levels.json'), 'w')
-        json.dump(sorted([{'level': k, 'value': v, 'comment': SEVERITY_COMMENTS[k]} for k,v in SEVERITY.iteritems()], key=lambda x: x['value']),
+        json.dump(sorted([{'level': k, 'value': v, 'comment': SEVERITY_COMMENTS.get(k,'')} for k,v in SEVERITY.iteritems()], key=lambda x: x['value']),
                 f3)
         f3.close()
 
