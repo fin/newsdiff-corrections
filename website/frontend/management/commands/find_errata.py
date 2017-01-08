@@ -6,7 +6,7 @@ import itertools
 import operator
 
 from django.core.management.base import BaseCommand
-from website.frontend.models import Article, Version, SEVERITY_COMMENTS
+from website.frontend.models import Article, Version, SEVERITY_COMMENTS, SEVERITY_COMMENTS
 from django.db.models.aggregates import Count
 from django.conf import settings
 
@@ -77,7 +77,7 @@ class Command(BaseCommand):
         f2.close()
 
         f3 = open(os.path.join(settings.WEBAPP_ROOT, '..', 'errata', 'levels.json'), 'w')
-        json.dump(SEVERITY_COMMENTS,
+        json.dump(sorted([{'level': k, 'value': v, 'comment': SEVERITY_COMMENTS[k]} for k,v in SEVERITY.iteritems()], key=lambda x: x['value']),
                 f3)
         f3.close()
 
