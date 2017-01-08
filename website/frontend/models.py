@@ -35,6 +35,13 @@ SEVERITY = {
   "OFFICIAL": 99,
 }
 
+SEVERITY_COMMENTS = {
+  "MINIMAL": 'At least slight changes were made',
+  "LOW": 'At least a fifth of the length of the article was changed',
+  "MODERATE": 'At least half of the article was changed',
+  "OFFICIAL": 'Explicit Erratum or Update statement',
+}
+
 # Create your models here.
 class Article(models.Model):
     class Meta:
@@ -166,15 +173,15 @@ class Version(models.Model):
             chars_changed = self.diff_info['chars_added']+self.diff_info['chars_removed']
             if chars_changed>0:
                 severity = SEVERITY["MINIMAL"]
-                severity_comment = 'At least slight changes were made'
+                severity_comment = SEVERITY_COMMENTS["MINIMAL"]
 
             if chars_changed>len(self.text())/5:
                 severity = SEVERITY["LOW"]
-                severity_comment = 'At least a fifth of the length of the article was changed'
+                severity_comment = SEVERITY_COMMENTS["LOW"]
 
             if chars_changed>len(self.text())/2:
                 severity = SEVERITY["MODERATE"]
-                severity_comment = 'At least half of the article was changed'
+                severity_comment = SEVERITY_COMMENTS["MODERATE"]
 
 
         # MISSING: whole-paragraph add/delete, etc

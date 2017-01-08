@@ -6,7 +6,7 @@ import itertools
 import operator
 
 from django.core.management.base import BaseCommand
-from website.frontend.models import Article, Version
+from website.frontend.models import Article, Version, SEVERITY_COMMENTS
 from django.db.models.aggregates import Count
 from django.conf import settings
 
@@ -75,4 +75,9 @@ class Command(BaseCommand):
         f2 = open(os.path.join(settings.WEBAPP_ROOT, '..', 'errata', 'sites.json'), 'w')
         json.dump(list(itertools.chain(*[x.domains for x in settings.PARSERS])), f2)
         f2.close()
+
+        f3 = open(os.path.join(settings.WEBAPP_ROOT, '..', 'errata', 'levels.json'), 'w')
+        json.dump(SEVERITY_COMMENTS,
+                f3)
+        f3.close()
 
