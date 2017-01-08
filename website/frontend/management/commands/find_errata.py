@@ -6,7 +6,7 @@ import itertools
 import operator
 
 from django.core.management.base import BaseCommand
-from website.frontend.models import Article, Version, SEVERITY_COMMENTS, SEVERITY_COMMENTS
+from website.frontend.models import Article, Version, SEVERITY, SEVERITY_COMMENTS
 from django.db.models.aggregates import Count
 from django.conf import settings
 
