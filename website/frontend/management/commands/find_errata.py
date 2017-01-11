@@ -6,6 +6,7 @@ import itertools
 import operator
 
 from django.core.management.base import BaseCommand
+from django.core.urlresolvers import reverse
 from website.frontend.models import Article, Version, SEVERITY, SEVERITY_COMMENTS
 from django.db.models.aggregates import Count
 from django.conf import settings
@@ -67,7 +68,10 @@ class Command(BaseCommand):
                        'update': version.severity_comment,
                        'severity': version.severity,
                        'title': version.title,
-                       'article_id': version.article.id,} for version in errata_on_day
+                       'article_id': version.article.id,} for version in errata_on_day,
+                       'link': reverse('diffview', kwargs=dict(vid1=version.previous_version().id,
+                                                               vid2=version.id,
+                                                               urlarg=verison.article.filename())
                        ]
             json.dump(towrite, f)
             f.close()
