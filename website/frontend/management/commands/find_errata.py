@@ -68,10 +68,11 @@ class Command(BaseCommand):
                        'update': version.severity_comment,
                        'severity': version.severity,
                        'title': version.title,
-                       'article_id': version.article.id,} for version in errata_on_day,
+                       'article_id': version.article.id,
                        'link': reverse('diffview', kwargs=dict(vid1=version.previous_version().id,
                                                                vid2=version.id,
-                                                               urlarg=verison.article.filename())
+                                                               urlarg=verison.article.filename()))
+                       } for version in errata_on_day
                        ]
             json.dump(towrite, f)
             f.close()
