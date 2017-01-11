@@ -71,7 +71,7 @@ class Command(BaseCommand):
                        'article_id': version.article.id,
                        'link': reverse('diffview', kwargs=dict(vid1=version.previous_version().id,
                                                                vid2=version.id,
-                                                               urlarg=verison.article.filename()))
+                                                               urlarg=version.article.filename()))
                        } for version in errata_on_day
                        ]
             json.dump(towrite, f)
