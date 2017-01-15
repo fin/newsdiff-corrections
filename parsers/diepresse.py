@@ -15,7 +15,7 @@ class DiePresseParser(BaseParser):
 
         self.meta = soup.findAll('meta')
 
-        artikel = soup.find('article')
+        artikel = soup.find('div',role='main')
 
         if not artikel:
             self.real_article = False
@@ -29,28 +29,31 @@ class DiePresseParser(BaseParser):
         self.title = elt.getText()
 
 
-        author = artikel.find('span', {"class":'articleauthor'})
+        author = artikel.find('strong', {"class":'article__author'})
 
         if author:
             self.byline = author.getText()
         else:
             self.byline = ''
 
-        lead = artikel.find('p', {'class': 'articlelead'})
-        content = artikel.find('div', id='articletext')
+
+        lead = artikel.find('p', {'class': 'article__lead'})
+        content = artikel.find('div', id='content-body')
+
 
         if not content:
             content = soup.find('div', {"class": 'copytext'})
-
         if not content:
             content = soup.find('div', {"id": "content-main"})
 
 
         h = html2text.HTML2Text()
 
-        date = artikel.find('time', {"itemprop":'datePublished'})
+        date = artikel.find('span', {"class":'article__timestamp'})
         self.date = '' if not date else date.getText()
 
         self.body = (h.handle(lead.prettify().decode('utf-8')).strip()+'\n\n' if lead else '') + h.handle(content.prettify().decode('utf-8')).strip()
 
         self.body = u'\n\n'.join(x for x in self.body.split('\n\n') if not x.startswith('Karte zur'))
+
+
