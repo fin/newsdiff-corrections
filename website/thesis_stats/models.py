@@ -4,9 +4,10 @@ import json
 class LogEntry(models.Model):
     identifier = models.CharField(max_length=255, db_index=True)
     date = models.DateTimeField(auto_now_add=True)
-    message_type = models.CharField(max_length=255, db_index=True)
-    message_body = models.TextField()
+    last_date = models.CharField(max_length=99)
+    cur_date = models.CharField(max_length=99)
+    data = models.TextField()
 
     @property
     def body(self):
-        return json.loads(self.message_body)
+        return json.loads(self.data)
