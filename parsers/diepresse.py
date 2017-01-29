@@ -26,6 +26,8 @@ class DiePresseParser(BaseParser):
             more.extract()
 
         elt = artikel.find('h1')
+        if not elt:
+            return
         self.title = elt.getText()
 
 

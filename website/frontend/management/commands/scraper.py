@@ -116,15 +116,6 @@ def mkdir_p(path):
 def canonicalize_url(url):
     return url.split('?')[0].split('#')[0].strip()
 
-def strip_prefix(string, prefix):
-    if string.startswith(prefix):
-        string = string[len(prefix):]
-    return string
-
-def url_to_filename(url):
-    return strip_prefix(url, 'http://').rstrip('/')
-
-
 class IndexLockError(OSError):
     pass
 
@@ -341,7 +332,7 @@ def update_article(article):
     t = datetime.now()
     logger.debug('Article parsed; trying to store')
     v, boring, diff = add_to_git_repo(to_store,
-                                           url_to_filename(article.url),
+                                           article.filename(),
                                            article)
     if v:
         logger.info('Modifying! new blob: %s', v)
@@ -444,7 +435,7 @@ def update_versions(todays_repo, do_all=False):
 
 #Remove index.lock if 5 minutes old
 def cleanup_git_repo(git_dir):
-    for name in ['.git/index.lock', '.git/refs/heads/master.lock']:
+    for name in ['.git/index.lock', '.git/refs/heads/master.lock', '.git/gc.pid.lock']:
         fname = os.path.join(git_dir, name)
         try:
             stat = os.stat(fname)
