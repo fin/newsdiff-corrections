@@ -11,7 +11,11 @@ parsers = """
 dst.DerStandardParser
 diepresse.DiePresseParser
 orf.OrfParser
+nyt.NYTParser
+cnn.CNNParser
+bbc.BBCParser
 """.split()
+#washpo.WashPoParser
 
 parser_dict = {}
 

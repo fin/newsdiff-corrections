@@ -5,3 +5,4 @@ beautifulsoup
 South
 html5lib
 html2text
+python-dateutil
