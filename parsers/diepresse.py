@@ -27,6 +27,7 @@ class DiePresseParser(BaseParser):
 
         elt = artikel.find('h1')
         if not elt:
+            self.real_article = False
             return
         self.title = elt.getText()
 
@@ -41,6 +42,10 @@ class DiePresseParser(BaseParser):
 
         lead = artikel.find('p', {'class': 'article__lead'})
         content = artikel.find('div', id='content-body')
+
+        if not lead:
+            self.real_article = False
+            return
 
 
         if not content:
