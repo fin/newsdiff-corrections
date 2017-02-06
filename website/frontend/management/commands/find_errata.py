@@ -73,6 +73,7 @@ class Command(BaseCommand):
                                                                vid2=version.id,
                                                                urlarg=version.article.filename()))
                        } for version in errata_on_day
+                       if version.previous_version()
                        ]
             json.dump(towrite, f)
             f.close()

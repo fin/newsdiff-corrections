@@ -12,6 +12,9 @@ import time
 import traceback
 import urllib2
 import json
+import collections
+import concurrent.futures
+import itertools
 
 import diff_match_patch
 
@@ -22,6 +25,12 @@ GIT_PROGRAM = 'git'
 
 from django.core.management.base import BaseCommand
 from optparse import make_option
+
+def batch(iterable, n=1):
+    l = len(iterable)
+    for ndx in range(0, l, n):
+        yield iterable[ndx:min(ndx + n, l)]
+
 
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
@@ -44,6 +53,14 @@ scanned them recently, unless --all is passed.
 '''.strip()
 
     def handle(self, *args, **options):
+        import signal
+
+        def handle_pdb(sig, frame):
+            import pdb
+            pdb.Pdb().set_trace(frame)
+        signal.signal(signal.SIGUSR1, handle_pdb)
+        print(os.getpid())
+
         ch = logging.FileHandler('/tmp/newsdiffs_logging', mode='w')
         ch.setLevel(logging.DEBUG)
         ch.setFormatter(formatter)
@@ -249,7 +266,7 @@ def add_to_git_repo(data, filename, article):
     if already_exists:
         if previous == data:
             logger.debug('Article matches current version in repo')
-            return None, None, None
+            return None, None, None, None
 
         #Now check how many times this same version has appeared before
         my_hash = run_git_command(['hash-object', filename],
@@ -272,7 +289,7 @@ def add_to_git_repo(data, filename, article):
 
             if number_equal >= 2: #Refuse to list a version more than twice
                 run_git_command(['checkout', filename], article.full_git_dir)
-                return None, None, None
+                return None, None, None, None
 
         if is_boring(previous, data):
             boring = True
@@ -284,30 +301,40 @@ def add_to_git_repo(data, filename, article):
         commit_message = 'Adding file %s' % filename
     else:
         commit_message = 'Change to %s' % filename
-    logger.debug('Running git commit... %s', time.time()-start_time)
-    run_git_command(['commit', filename, '-m', commit_message],
-                    article.full_git_dir)
+
+
+    #logger.debug('done %s', time.time()-start_time)
+    return article.full_git_dir, commit_message, boring, diff
+
+def commit_git_repo(full_git_dir, commit_message):
+    os.chdir(full_git_dir)
+
+    start_time = time.time()
+
+    logger.debug('Running git commit... %s', start_time)
+    run_git_command(['commit', '-a', '-m', commit_message],
+                    full_git_dir)
     logger.debug('git revlist... %s', time.time()-start_time)
 
+def get_git_version(article):
+    os.chdir(article.full_git_dir)
     # Now figure out what the commit ID was.
     # I would like this to be "git rev-list HEAD -n1 filename"
     # unfortunately, this command is slow: it doesn't abort after the
     # first line is output.  Without filename, it does abort; therefore
     # we do this and hope no intervening commit occurs.
     # (looks like the slowness is fixed in git HEAD)
-    v = run_git_command(['rev-list', 'HEAD', '-n1'],
+    v = run_git_command(['rev-list', 'HEAD', '-n1', article.filename()],
                         article.full_git_dir).strip()
-    logger.debug('done %s', time.time()-start_time)
 
-
-    return v, boring, diff
+    return v
 
 
 def load_article(url):
     try:
         parser = parsers.get_parser(url)
     except KeyError:
-        logger.info('Unable to parse domain, skipping')
+        logger.info('Unable to parse domain, skipping %s', url)
         return
     try:
         parsed_article = parser(url)
@@ -324,36 +351,40 @@ def load_article(url):
 
 #Update url in git
 #Return whether it changed
-def update_article(article):
-    parsed_article = load_article(article.url)
+def update_article(article, parsed_article):
+    article.last_check = datetime.now()
     if parsed_article is None:
         return
     to_store = unicode(parsed_article).encode('utf8')
-    t = datetime.now()
     logger.debug('Article parsed; trying to store')
-    v, boring, diff = add_to_git_repo(to_store,
+    git_dir, commit_message, boring, diff = add_to_git_repo(to_store,
                                            article.filename(),
                                            article)
-    if v:
-        logger.info('Modifying! new blob: %s', v)
-        v_row = models.Version(v=v,
-                               boring=boring,
-                               title=parsed_article.title,
-                               byline=parsed_article.byline,
-                               date=t,
-                               article=article,
-                               )
-        v_row.diff_info = get_diff_info(diff)
-        v_row.diff_details_json = json.dumps(diff,ensure_ascii=False)
-        if diff:
-            try:
-                v_row.update_severity(save=False)
-            except:
-                print 'update_severity exception', diff
-        if not boring:
-            article.last_update = t
-        v_row.save()
-        article.save()
+    if git_dir:
+        return git_dir, commit_message, parsed_article, boring, diff
+
+def finalize_article_update(article, parsed_article, boring, diff):
+    v = get_git_version(article)
+    logger.info('Modifying! new blob: %s', v)
+    t = datetime.now()
+    v_row = models.Version(v=v,
+                           boring=boring,
+                           title=parsed_article.title,
+                           byline=parsed_article.byline,
+                           date=t,
+                           article=article,
+                           )
+    v_row.diff_info = get_diff_info(diff)
+    v_row.diff_details_json = json.dumps(diff,ensure_ascii=False)
+    if diff:
+        try:
+            v_row.update_severity(save=False)
+        except:
+            print 'update_severity exception', diff
+    if not boring:
+        article.last_update = t
+    v_row.save()
+    article.save()
 
 def update_articles(todays_git_dir):
     logger.info('Starting scraper; looking for new URLs')
@@ -375,7 +406,7 @@ def get_update_delay(minutes_since_update):
     elif days_since_update < 1:
         return 60
     elif days_since_update < 7:
-        return 180
+        return 360
     elif days_since_update < 30:
         return 60*24*3
     elif days_since_update < 360:
@@ -398,7 +429,7 @@ def update_versions(todays_repo, do_all=False):
     # it still happens and I don't run out of quota. =)
     logger.info('Starting with gc:')
     try:
-        run_git_command(['gc'], models.GIT_DIR + todays_repo)
+        run_git_command(['gc', '--auto'], models.GIT_DIR + todays_repo)
     except subprocess.CalledProcessError as e:
         print >> sys.stderr, 'Error on initial gc!'
         print >> sys.stderr, 'Output was """'
@@ -407,6 +438,9 @@ def update_versions(todays_repo, do_all=False):
         raise
 
     logger.info('Done!')
+
+    articles_to_update = []
+
     for i, article in enumerate(articles):
         logger.debug('Woo: %s %s %s (%s/%s)',
                      article.minutes_since_update(),
@@ -415,20 +449,77 @@ def update_versions(todays_repo, do_all=False):
         delay = get_update_delay(article.minutes_since_update())
         if article.minutes_since_check() < delay and not do_all:
             continue
-        logger.info('Considering %s', article.url)
+        articles_to_update.append(article)
 
-        article.last_check = datetime.now()
-        try:
-            update_article(article)
-        except Exception, e:
-            if isinstance(e, subprocess.CalledProcessError):
-                logger.error('CalledProcessError when updating %s', article.url)
-                logger.error(repr(e.output))
+    for i,article_batch in enumerate(batch(articles_to_update,300)):
+        logger.debug('Batch %d of 300 of %d', i, len(articles_to_update))
+
+        results = []
+        update_results = []
+        git_dirs_to_commit = collections.defaultdict(lambda: '')
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            future_to_article = {
+                    executor.submit(load_article, article.url): article
+                    for article in article_batch}
+
+            try:
+                for future in concurrent.futures.as_completed(future_to_article.keys(),
+                        timeout=60*5 # 5 minute timeout per batch
+                        ):
+                    article = future_to_article[future]
+                    try:
+                        parsed_article = future.result()
+                        results.append((article, parsed_article,))
+                    except Exception, e:
+                        logger.error('ThreadPool Exception when loading %s', article.url)
+                        logger.error(traceback.format_exc())
+                    if len(results)%100==0:
+                        logger.info('Batch %d has %d results',
+                                i, len(results))
+            except concurrent.futures.TimeoutError, e:
+                logger.error('TimeoutError in batch %d; results length %d, batch length %d, continuing', i, len(results), len(article_batch))
+
+
+
+        for article,parsed_article in results:
+            try:
+                r = update_article(article, parsed_article)
+                if r:
+                    git_dir, commit_message, parsed_article, boring, diff = r
+                    git_dirs_to_commit[git_dir] += '\n'+commit_message
+            except Exception, e:
+                if isinstance(e, subprocess.CalledProcessError):
+                    logger.error('CalledProcessError when updating %s', article.url)
+                    logger.error(repr(e.output))
+                else:
+                    logger.error('Unknown exception when updating %s', article.url)
+
+                logger.error(traceback.format_exc())
+                update_results.append(None)
             else:
-                logger.error('Unknown exception when updating %s', article.url)
+                update_results.append(r)
 
-            logger.error(traceback.format_exc())
-        article.save()
+        for gd,cm in git_dirs_to_commit.iteritems():
+            commit_git_repo(gd,cm)
+
+        for r2,r in itertools.izip(results,update_results):
+            article, parsed_article = r2
+            try:
+                if r:
+                    git_dir, commit_message, parsed_article, boring, diff = r
+                    #commit_git_repo(article.full_git_dir, article.filename(), commit_message)
+                    finalize_article_update(article, parsed_article,
+                            boring, diff)
+                article.save()
+            except Exception, e:
+                if isinstance(e, subprocess.CalledProcessError):
+                    logger.error('CalledProcessError when updating %s', article.url)
+                    logger.error(repr(e.output))
+                else:
+                    logger.error('Unknown exception when updating %s', article.url)
+
+                logger.error(traceback.format_exc())
     #logger.info('Ending with gc:')
     #run_git_command(['gc'])
     logger.info('Done!')
