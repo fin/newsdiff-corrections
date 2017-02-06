@@ -61,6 +61,7 @@ class Command(BaseCommand):
         )
         for date, errata_on_day in errata_by_date:
             print date
+            errata_on_day = itertools.islice(errata_on_day,500)
             f = open(os.path.join(settings.WEBAPP_ROOT, '..', 'errata', date.isoformat()+'.json'), 'w')
             towrite = [{'url': version.article.url,
                        'time': version.date.isoformat(),
