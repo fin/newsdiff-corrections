@@ -458,7 +458,7 @@ def update_versions(todays_repo, do_all=False):
         update_results = []
         git_dirs_to_commit = collections.defaultdict(lambda: '')
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
             future_to_article = {
                     executor.submit(load_article, article.url): article
                     for article in article_batch}
