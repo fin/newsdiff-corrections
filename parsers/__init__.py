@@ -13,6 +13,8 @@ diepresse.DiePresseParser
 orf.OrfParser
 nyt.NYTParser
 bbc.BBCParser
+krone.KroneParser
+heute.HeuteParser
 """.split()
 #washpo.WashPoParser
 #cnn.CNNParser
