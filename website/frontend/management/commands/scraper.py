@@ -379,8 +379,8 @@ def finalize_article_update(article, parsed_article, boring, diff):
     if diff:
         try:
             v_row.update_severity(save=False)
-        except:
-            print 'update_severity exception', diff
+        except Exception, e:
+            print 'update_severity exception', diff, e
     if not boring:
         article.last_update = t
     v_row.save()
@@ -401,9 +401,9 @@ def update_articles(todays_git_dir):
 
 def get_update_delay(minutes_since_update):
     days_since_update = minutes_since_update // (24 * 60)
-    if minutes_since_update < 60*3:
+    if minutes_since_update < 60:
         return 15
-    elif days_since_update < 1:
+    elif days_since_update < 3:
         return 60
     elif days_since_update < 7:
         return 360

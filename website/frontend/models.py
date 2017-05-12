@@ -88,6 +88,11 @@ class Article(models.Model):
         delta = datetime.now() - self.last_check
         return delta.seconds // 60 + 24*60*delta.days
 
+class VersionManager(models.Manager):
+    def get_query_set(self):
+        return super(VersionManager, self).get_query_set().defer('diff_details_json', 'diff_json')
+
+
 class Version(models.Model):
     class Meta:
         db_table = 'version'
@@ -103,6 +108,8 @@ class Version(models.Model):
     diff_details_json = models.TextField(null=True)
     severity = models.IntegerField(null=True)
     severity_comment = models.TextField(null=True)
+
+    objects = VersionManager()
 
     def text(self):
         try:
