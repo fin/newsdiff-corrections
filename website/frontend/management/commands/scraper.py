@@ -61,10 +61,10 @@ scanned them recently, unless --all is passed.
         signal.signal(signal.SIGUSR1, handle_pdb)
         print(os.getpid())
 
-        ch = logging.FileHandler('/tmp/newsdiffs_logging', mode='w')
-        ch.setLevel(logging.DEBUG)
-        ch.setFormatter(formatter)
-        logger.addHandler(ch)
+        #ch = logging.FileHandler('/tmp/newsdiffs_logging', mode='w')
+        #ch.setLevel(logging.DEBUG)
+        #ch.setFormatter(formatter)
+        #logger.addHandler(ch)
 
         ch = logging.FileHandler('/tmp/newsdiffs_logging_errs', mode='a')
         ch.setLevel(logging.WARNING)
