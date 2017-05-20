@@ -390,14 +390,14 @@ def update_articles(todays_git_dir):
     logger.info('Starting scraper; looking for new URLs')
     all_urls = get_all_article_urls()
     logger.info('Got all %s urls; storing to database' % len(all_urls))
+    new_articles = 0
     for i, url in enumerate(all_urls):
-        logger.debug('Woo: %d/%d is %s' % (i+1, len(all_urls), url))
         if len(url) > 255:  #Icky hack, but otherwise they're truncated in DB.
             continue
         if not models.Article.objects.filter(url=url).count():
-            logger.debug('Adding!')
             models.Article(url=url, git_dir=todays_git_dir).save()
-    logger.info('Done storing to database')
+            new_articles+=1
+    logger.info('Done storing %d Articles to database' % new_articles)
 
 def get_update_delay(minutes_since_update):
     days_since_update = minutes_since_update // (24 * 60)
@@ -442,17 +442,15 @@ def update_versions(todays_repo, do_all=False):
     articles_to_update = []
 
     for i, article in enumerate(articles):
-        logger.debug('Woo: %s %s %s (%s/%s)',
-                     article.minutes_since_update(),
-                     article.minutes_since_check(),
-                     update_priority(article), i+1, len(articles))
         delay = get_update_delay(article.minutes_since_update())
         if article.minutes_since_check() < delay and not do_all:
             continue
         articles_to_update.append(article)
 
-    for i,article_batch in enumerate(batch(articles_to_update,300)):
-        logger.debug('Batch %d of 300 of %d', i, len(articles_to_update))
+    BATCH_SIZE = 300
+
+    for i,article_batch in enumerate(batch(articles_to_update,BATCH_SIZE)):
+        logger.debug('Batch: %d of %d', i*BATCH_SIZE, len(articles_to_update))
 
         results = []
         update_results = []
@@ -465,7 +463,7 @@ def update_versions(todays_repo, do_all=False):
 
             try:
                 for future in concurrent.futures.as_completed(future_to_article.keys(),
-                        timeout=60*5 # 5 minute timeout per batch
+                        timeout=60*4 # 5 minute timeout per batch
                         ):
                     article = future_to_article[future]
                     try:
@@ -475,10 +473,10 @@ def update_versions(todays_repo, do_all=False):
                         logger.error('ThreadPool Exception when loading %s', article.url)
                         logger.error(traceback.format_exc())
                     if len(results)%100==0:
-                        logger.info('Batch %d has %d results',
-                                i, len(results))
+                        logger.info('Batch (%d+) has %d results',
+                                i*BATCH_SIZE, len(results))
             except concurrent.futures.TimeoutError, e:
-                logger.error('TimeoutError in batch %d; results length %d, batch length %d, continuing', i, len(results), len(article_batch))
+                logger.error('TimeoutError in batch %d (%d); results length %d, batch length %d, continuing', i, i*BATCH_SIZE, len(results), len(article_batch))
 
 
 
@@ -508,7 +506,6 @@ def update_versions(todays_repo, do_all=False):
             try:
                 if r:
                     git_dir, commit_message, parsed_article, boring, diff = r
-                    #commit_git_repo(article.full_git_dir, article.filename(), commit_message)
                     finalize_article_update(article, parsed_article,
                             boring, diff)
                 article.save()
@@ -520,8 +517,6 @@ def update_versions(todays_repo, do_all=False):
                     logger.error('Unknown exception when updating %s', article.url)
 
                 logger.error(traceback.format_exc())
-    #logger.info('Ending with gc:')
-    #run_git_command(['gc'])
     logger.info('Done!')
 
 #Remove index.lock if 5 minutes old
