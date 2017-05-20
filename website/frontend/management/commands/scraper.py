@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 from datetime import datetime
 import errno
@@ -25,6 +26,13 @@ GIT_PROGRAM = 'git'
 
 from django.core.management.base import BaseCommand
 from optparse import make_option
+
+import re
+
+RE_REMOVE = [re.compile(x,re.MULTILINE|re.UNICODE) for x in
+        [u'^Schließen$', # ignore diepresse schließen image alt text
+            '!\[[^\]]+]\([^)]+\)'] # ignore changed images (diepresse)
+        ]
 
 def batch(iterable, n=1):
     l = len(iterable)
@@ -225,8 +233,12 @@ def is_boring(old, new):
     return False
 
 def get_diff(old, new):
+    for r in RE_REMOVE:
+        old = r.sub('', old)
+        new = r.sub('', new)
     dmp = diff_match_patch.diff_match_patch()
     dmp.Diff_Timeout = 3 # seconds; default of 1 is too little
+
     diff = dmp.diff_main(old, new)
     dmp.diff_cleanupSemantic(diff)
     return diff

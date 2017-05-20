@@ -27,7 +27,7 @@ parser = getattr(__import__(module, globals(), fromlist=[classname]), classname)
 if url:
     parsed_article = parser(url)
     if parsed_article.real_article:
-        print unicode(parsed_article)
+        print unicode(parsed_article).encode('utf-8')
     else:
         print 'not real article'
 else:

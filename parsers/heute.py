@@ -28,6 +28,7 @@ class HeuteParser(BaseParser):
         h = html2text.HTML2Text()
 
         self.body = h.handle(content.prettify().decode('utf-8'))
+        self.body = self.body.split('&lt;!!&gt',1)[0]
 
 
         dcs = [x for x in soup.findAll('div', {'class':
