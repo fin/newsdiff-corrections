@@ -99,8 +99,9 @@ def get_articles(source=None, distance=0):
 
         if len(versions) < 2:
             continue
-        rowinfo = get_rowinfo(article, versions)
-        articles.append((article, versions[-1], rowinfo))
+        if len(articles)<100:
+            rowinfo = get_rowinfo(article, versions)
+            articles.append((article, versions[-1], rowinfo))
     print 'Queries:', len(django.db.connection.queries), django.db.connection.queries
     articles.sort(key = lambda x: x[-1][0][1].date, reverse=True)
     return articles
