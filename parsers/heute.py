@@ -18,6 +18,10 @@ class HeuteParser(BaseParser):
 
         self.byline = ''
 
+        if len(soup.findAll('div', {'id': 'adapticker'}))>0:
+            self.real_article = False
+            return
+
         content = soup.findAll('div', {'class':lambda x: x and 'story_text' in x.split()})
 
         if len(content)==0:
