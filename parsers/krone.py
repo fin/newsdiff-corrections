@@ -13,6 +13,10 @@ class KroneParser(BaseParser):
         soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES,
                              fromEncoding='utf-8')
 
+        if '/sport-mix/' in self.url:
+            self.real_article = False
+            return
+
         elt = soup.find('h1')
         self.title = elt.getText()
 
