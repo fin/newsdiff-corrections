@@ -233,9 +233,6 @@ def is_boring(old, new):
     return False
 
 def get_diff(old, new):
-    for r in RE_REMOVE:
-        old = r.sub('', old)
-        new = r.sub('', new)
     dmp = diff_match_patch.diff_match_patch()
     dmp.Diff_Timeout = 3 # seconds; default of 1 is too little
 
@@ -272,10 +269,14 @@ def add_to_git_repo(data, filename, article):
     else:
         already_exists = True
 
+    for r in RE_REMOVE:
+        data = r.sub('', data)
 
     open(filename, 'w').write(data)
 
     if already_exists:
+        for r in RE_REMOVE:
+            previous = r.sub('', previous)
         if previous == data:
             logger.debug('Article matches current version in repo')
             return None, None, None, None
