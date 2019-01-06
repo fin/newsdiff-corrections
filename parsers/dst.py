@@ -6,8 +6,8 @@ import html2text
 class DerStandardParser(BaseParser):
     domains = ['derstandard.at', 'diestandard.at', 'dastandard.at']
 
-    feeder_pat   = '^http://derstandard.at/(Jetzt|[0-9]+)/'
-    feeder_pages = ['http://derstandard.at/']
+    feeder_pat   = '^https://derstandard.at/(Jetzt|[0-9]+)/'
+    feeder_pages = ['https://derstandard.at/']
 
     def _parse(self, html):
         soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES,

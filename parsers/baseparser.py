@@ -33,6 +33,8 @@ def grab_url(url, max_depth=5, opener=None):
         cj = cookielib.CookieJar()
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
     retry = False
+    if 'derstandard' in url:
+        opener.addheaders = [('User-Agent', "Googlebot/2.1 (newsdiff.p.nomin.at)",)]
     try:
         text = opener.open(url, timeout=5).read()
         if '<title>NY Times Advertisement</title>' in text:
@@ -142,6 +144,7 @@ class BaseParser(object):
         all_urls = []
         for feeder_url in cls.feeder_pages:
             html = grab_url(feeder_url)
+
             soup = cls.feeder_bs(html)
 
             # "or ''" to make None into str
