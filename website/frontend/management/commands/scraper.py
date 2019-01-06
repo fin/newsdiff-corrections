@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import errno
 from frontend import models
 import httplib
@@ -25,6 +25,7 @@ from parsers.baseparser import canonicalize, formatter, logger
 GIT_PROGRAM = 'git'
 
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from optparse import make_option
 
 import re
@@ -429,7 +430,11 @@ def get_update_delay(minutes_since_update):
 
 def update_versions(todays_repo, do_all=False):
     logger.info('Looking for articles to check')
-    articles = list(models.Article.objects.exclude(git_dir='old'))
+    # For memory issues, restrict to the last year of articles
+    threshold = datetime.now() - timedelta(days=366)
+    article_query = models.Article.objects.exclude(git_dir='old').filter(Q(last_update__gt=threshold) | 
+                                                                         Q(initial_date__gt=threshold))
+    articles = list(article_query)
     total_articles = len(articles)
 
     update_priority = lambda x: x.minutes_since_check() * 1. / get_update_delay(x.minutes_since_update())
