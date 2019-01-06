@@ -1,6 +1,7 @@
 from baseparser import BaseParser
 from BeautifulSoup import BeautifulSoup, Tag
 import html2text
+import re
 
 
 class DiePresseParser(BaseParser):
@@ -62,10 +63,8 @@ class DiePresseParser(BaseParser):
         self.body = (h.handle(lead.prettify().decode('utf-8')).strip()+'\n\n' if lead else '') + h.handle(content.prettify().decode('utf-8')).strip()
 
 
-        if 'Wert zu wissen' in self.body: # ignore premium previews
+        if 'Wert zu wissen' in self.body or '_premium_' in self.body: # ignore premium previews
             self.real_article = False
             return
 
         self.body = u'\n\n'.join(x for x in self.body.split('\n\n') if not x.startswith('Karte zur'))
-
-
