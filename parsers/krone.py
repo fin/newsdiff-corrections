@@ -6,8 +6,8 @@ import html2text
 class KroneParser(BaseParser):
     domains = ['www.krone.at', 'krone.at']
 
-    feeder_pat   = '^http://krone.at/(.*-[0-9]+)'
-    feeder_pages = ['http://krone.at/']
+    feeder_pat   = '^https://www.krone.at/([0-9]+)'
+    feeder_pages = ['https://www.krone.at/']
 
     def _parse(self, html):
         soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES,
@@ -20,10 +20,9 @@ class KroneParser(BaseParser):
         elt = soup.find('h1')
         self.title = elt.getText()
 
-
         self.byline = ''
 
-        content = soup.findAll('div', {'class':lambda x: x and 'content_text' in x.split()})
+        content = soup.findAll('div', {'class':lambda x: x and 'c_content' in x.split()})
 
         if len(content)==0:
             self.real_article = False
