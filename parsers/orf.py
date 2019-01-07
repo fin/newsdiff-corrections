@@ -7,8 +7,8 @@ import re
 class OrfParser(BaseParser):
     domains = ['orf.at']
 
-    feeder_pat   = '^http://orf.at/stories/[0-9]{7}/'
-    feeder_pages = ['http://orf.at/']
+    feeder_pat   = '^https://orf.at/stories/[0-9]{7}/'
+    feeder_pages = ['https://orf.at/']
 
     def _parse(self, html):
         soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES,
@@ -16,17 +16,16 @@ class OrfParser(BaseParser):
 
         self.meta = soup.findAll('meta')
 
-        artikel = soup.find('div', {'class': re.compile(r'.*storyWrapper.*')})
+        artikel = soup.find('div', {'class': re.compile(r'.*story-wrapper.*')})
 
         elt = artikel.find('h1')
         self.title = elt.getText()
-
 
         author = artikel.find('span', {"class":'articleauthor'})
 
         self.byline = author.getText() if author else ''
 
-        content = artikel.find('div', id='ss-storyText')
+        content = artikel.find('div', id='ss-storyContent')
 
         if not content:
             content = soup.find('div', {"class": 'storyText'})
@@ -50,4 +49,3 @@ class OrfParser(BaseParser):
             return
 
         self.body = h.handle(content.prettify().decode('utf-8')).strip()
-
