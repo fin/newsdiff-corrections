@@ -29,6 +29,9 @@ class HeuteParser(BaseParser):
             return
         content = content[0]
 
+        for poll in content.findAll('div', {'class': lambda x: x and 'info_poll' in x}):
+            poll.decompose()
+
         h = html2text.HTML2Text()
 
         self.body = h.handle(content.prettify().decode('utf-8'))

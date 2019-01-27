@@ -32,6 +32,10 @@ class DiePresseParser(BaseParser):
             return
         self.title = elt.getText()
 
+        if 'Heute vor' in self.title:
+            self.real_article = False
+            return
+
 
         author = artikel.find('strong', {"class":'article__author'})
 
