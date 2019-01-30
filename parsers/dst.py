@@ -13,6 +13,11 @@ class DerStandardParser(BaseParser):
         soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES,
                              fromEncoding='utf-8')
 
+        for x in soup.findAll('a'):
+            if 'Aus den Foren' in x.getText():
+                self.real_article = False
+                return
+
         self.meta = soup.findAll('meta')
         elt = soup.find('h1')
         self.title = elt.getText()
