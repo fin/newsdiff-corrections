@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from baseparser import BaseParser
 from BeautifulSoup import BeautifulSoup, Tag
 import html2text
@@ -21,6 +22,10 @@ class DerStandardParser(BaseParser):
         self.meta = soup.findAll('meta')
         elt = soup.find('h1')
         self.title = elt.getText()
+
+        if u'tägliche Reise' in self.title:
+            self.real_article = False
+            return
 
 
         info = soup.find('h6', {"class": "info"})

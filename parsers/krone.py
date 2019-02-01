@@ -29,6 +29,9 @@ class KroneParser(BaseParser):
             return
         content = content[0]
 
+        for table in content.findAll('div', {'class': lambda x: x and 'c_sport-multitable' in x}):
+            table.decompose()
+
         h = html2text.HTML2Text()
 
         self.body = h.handle(content.prettify().decode('utf-8'))

@@ -32,7 +32,7 @@ class DiePresseParser(BaseParser):
             return
         self.title = elt.getText()
 
-        if 'Heute vor' in self.title:
+        if 'Heute vor' in self.title or 'Transfer-Ticker:' in self.title:
             self.real_article = False
             return
 
