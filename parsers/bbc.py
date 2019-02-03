@@ -1,5 +1,5 @@
 from baseparser import BaseParser
-from BeautifulSoup import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, Tag
 
 
 class BBCParser(BaseParser):
@@ -10,7 +10,7 @@ class BBCParser(BaseParser):
     feeder_pages = ['http://www.bbc.co.uk/news/']
 
     def _parse(self, html):
-        soup = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES,
+        soup = BeautifulSoup(html,# convertEntities=BeautifulSoup.HTML_ENTITIES,
                              fromEncoding='utf-8')
 
         self.meta = soup.findAll('meta')
@@ -29,5 +29,6 @@ class BBCParser(BaseParser):
         if div is None:
             self.real_article = False
             return
+
         self.body = '\n'+'\n\n'.join([x.getText() for x in div.childGenerator()
                                       if isinstance(x, Tag) and x.name == 'p'])
